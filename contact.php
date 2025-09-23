@@ -18,13 +18,13 @@ include 'config.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!$data || !isset($data['name']) || !isset($data['contact']) || !isset($data['subject']) || !isset($data['message'])) {
+if (!$data || !isset($data['name']) || !isset($data['email']) || !isset($data['subject']) || !isset($data['message'])) {
     echo json_encode(["success" => false, "message" => "Invalid input"]);
     exit;
 }
 
-$stmt = $conn->prepare("INSERT INTO contact_messages (name, contact, subject, message) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $data['name'], $data['contact'], $data['subject'], $data['message']);
+$stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)");
+$stmt->bind_param("ssss", $data['name'], $data['email'], $data['subject'], $data['message']);
 
 if ($stmt->execute()) {
     echo json_encode(["success" => true, "message" => "Message sent successfully"]);

@@ -6,9 +6,16 @@ include 'config.php'; // must define $conn (mysqli)
 header('Content-Type: application/json');
 
 // Allow cross-origin requests while developing (adjust origin for production)
-header('Access-Control-Allow-Origin: *');
+
+// header('Access-Control-Allow-Origin: *');
+// header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+// header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization');
+
+header('Access-Control-Allow-Origin: https://azhalitsolutions.com');
+header('Access-Control-Allow-Origin: https://admin.azhalitsolutions.com');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-Requested-With, Authorization');
+
 
 // Short-circuit preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {

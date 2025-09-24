@@ -42,10 +42,10 @@ if (!isset($conn) || ($conn instanceof mysqli && $conn->connect_errno)) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $sectionId = isset($_GET['section_id']) ? (int)$_GET['section_id'] : 0;
     if ($sectionId > 0) {
-        $stmt = $conn->prepare("SELECT * FROM about_items WHERE section_id = ? ORDER BY created_at DESC");
+        $stmt = $conn->prepare("SELECT * FROM about_items WHERE section_id = ? ORDER BY created_at ASC");
         $stmt->bind_param("i", $sectionId);
     } else {
-        $stmt = $conn->prepare("SELECT * FROM about_items ORDER BY created_at DESC");
+        $stmt = $conn->prepare("SELECT * FROM about_items ORDER BY created_at ASC");
     }
     if (!$stmt) jsonResponse(['success' => false, 'error' => $conn->error], 500);
     $stmt->execute();

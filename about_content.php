@@ -96,7 +96,7 @@ function removeUploadedFileIfExists(string $relativePath)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $sql = "SELECT id, section_key, header_name, description, file_path, status, created_at, updated_at
             FROM about_sections
-            ORDER BY created_at DESC";
+            ORDER BY created_at ASC";
     $result = $conn->query($sql);
     if (!$result) {
         jsonResponse(['success' => false, 'error' => $conn->error], 500);

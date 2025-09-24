@@ -51,4 +51,32 @@ CREATE TABLE home_contents (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+/*Aout Content Table*/
+CREATE TABLE about_sections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    section_key VARCHAR(50) UNIQUE NOT NULL,  -- "section1" or "section2"
+    header_name VARCHAR(255) NOT NULL,        -- main title
+    description TEXT NOT NULL,
+    file_path VARCHAR(255),                   -- optional image/file for section1
+    status BOOLEAN NOT NULL DEFAULT 1,        -- active/inactive
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+
+CREATE TABLE about_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    section_id INT NOT NULL,                  -- links to about_sections
+    icon VARCHAR(100) NOT NULL,               -- FontAwesome class
+    subtitle VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status BOOLEAN NOT NULL DEFAULT 1,        -- active/inactive
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (section_id) REFERENCES about_sections(id) ON DELETE CASCADE
+);
+
+
+
 /* Admin Pannel Tables End Here */

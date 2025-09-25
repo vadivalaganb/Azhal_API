@@ -78,5 +78,14 @@ CREATE TABLE about_items (
 );
 
 
+CREATE TABLE services_content (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    icon VARCHAR(100) NOT NULL,               -- FontAwesome class
+    header_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status BOOLEAN NOT NULL DEFAULT 1,        -- active/inactive
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
 /* Admin Pannel Tables End Here */

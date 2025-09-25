@@ -88,4 +88,24 @@ CREATE TABLE services_content (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE employees (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    gender ENUM('Male','Female','Other') NOT NULL,
+    dob DATE NOT NULL,
+    designation VARCHAR(100) NOT NULL,
+    department VARCHAR(100) NOT NULL,
+    joining_date DATE NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    phone VARCHAR(20) NOT NULL,
+    location VARCHAR(100),
+    manager VARCHAR(100),
+    status TINYINT(1) DEFAULT 1,
+    profile_image VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+
+
 /* Admin Pannel Tables End Here */

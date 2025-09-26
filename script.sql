@@ -107,5 +107,25 @@ CREATE TABLE employees (
 );
 
 
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) UNIQUE NOT NULL
+);
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50),
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    email VARCHAR(150) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    avatar_url VARCHAR(255),
+    role_id INT NOT NULL,
+    status TINYINT DEFAULT 1,
+    is_email_verified TINYINT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
 
 /* Admin Pannel Tables End Here */

@@ -13,8 +13,10 @@ CREATE TABLE contact_messages (
   email VARCHAR(100) NOT NULL,
   subject VARCHAR(150) NOT NULL,
   message TEXT NOT NULL,
+  status ENUM('new', 'in_progress', 'resolved') DEFAULT 'new',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 /* Student Register Table */
 CREATE TABLE student_register (

@@ -1,36 +1,102 @@
 <?php
 $allowedOrigins = [
     "https://azhalitsolutions.com",
-    "https://admin.azhalitsolutions.com"
+    "https://admin.azhalitsolutions.com",
+     "http://localhost:4200"
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? "";
-
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
 }
-
-header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
 include 'config.php';
 
+$method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!$data || !isset($data['name']) || !isset($data['email']) || !isset($data['subject']) || !isset($data['message'])) {
-    echo json_encode(["success" => false, "message" => "Invalid input"]);
-    exit;
+// ---------- CREATE ----------
+if ($method === "POST") {
+    if (!$data || !isset($data['name'], $data['email'], $data['subject'], $data['message'])) {
+        echo json_encode(["success" => false, "message" => "Invalid input"]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $data['name'], $data['email'], $data['subject'], $data['message']);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Message created successfully"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Insert failed", "error" => $stmt->error]);
+    }
+    $stmt->close();
 }
 
-$stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)");
-$stmt->bind_param("ssss", $data['name'], $data['email'], $data['subject'], $data['message']);
-
-if ($stmt->execute()) {
-    echo json_encode(["success" => true, "message" => "Message sent successfully"]);
-} else {
-    echo json_encode(["success" => false, "message" => "Failed to save message", "error" => $stmt->error]);
+// ---------- READ ----------
+elseif ($method === "GET") {
+    if (isset($_GET['id'])) {
+        $id = intval($_GET['id']);
+        $stmt = $conn->prepare("SELECT * FROM contact_messages WHERE id = ?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        echo json_encode($result ?: ["success" => false, "message" => "Message not found"]);
+        $stmt->close();
+    } else {
+        $result = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC");
+        $messages = [];
+        while ($row = $result->fetch_assoc()) {
+            $messages[] = $row;
+        }
+        echo json_encode($messages);
+    }
 }
 
-$stmt->close();
+// ---------- UPDATE ----------
+elseif ($method === "PUT") {
+    if (!isset($_GET['id'])) {
+        echo json_encode(["success" => false, "message" => "ID required"]);
+        exit;
+    }
+    $id = intval($_GET['id']);
+
+    if (!$data || !isset($data['name'], $data['email'], $data['subject'], $data['message'])) {
+        echo json_encode(["success" => false, "message" => "Invalid input"]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("UPDATE contact_messages SET name=?, email=?, subject=?, message=? WHERE id=?");
+    $stmt->bind_param("ssssi", $data['name'], $data['email'], $data['subject'], $data['message'], $id);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Message updated successfully"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Update failed", "error" => $stmt->error]);
+    }
+    $stmt->close();
+}
+
+// ---------- DELETE ----------
+elseif ($method === "DELETE") {
+    if (!isset($_GET['id'])) {
+        echo json_encode(["success" => false, "message" => "ID required"]);
+        exit;
+    }
+    $id = intval($_GET['id']);
+
+    $stmt = $conn->prepare("DELETE FROM contact_messages WHERE id = ?");
+    $stmt->bind_param("i", $id);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Message deleted successfully"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Delete failed", "error" => $stmt->error]);
+    }
+    $stmt->close();
+}
+
 $conn->close();

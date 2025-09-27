@@ -1,8 +1,9 @@
 <?php
+// ---------- CORS ----------
 $allowedOrigins = [
     "https://azhalitsolutions.com",
     "https://admin.azhalitsolutions.com",
-     "http://localhost:4200"
+    "http://localhost:4200"
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? "";
@@ -13,8 +14,8 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
+// ---------- DB ----------
 include 'config.php';
-
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -25,7 +26,7 @@ if ($method === "POST") {
         exit;
     }
 
-    $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message, status) VALUES (?, ?, ?, ?, 'new')");
     $stmt->bind_param("ssss", $data['name'], $data['email'], $data['subject'], $data['message']);
 
     if ($stmt->execute()) {
@@ -64,16 +65,25 @@ elseif ($method === "PUT") {
     }
     $id = intval($_GET['id']);
 
-    if (!$data || !isset($data['name'], $data['email'], $data['subject'], $data['message'])) {
+    if (!$data) {
         echo json_encode(["success" => false, "message" => "Invalid input"]);
         exit;
     }
 
-    $stmt = $conn->prepare("UPDATE contact_messages SET name=?, email=?, subject=?, message=? WHERE id=?");
-    $stmt->bind_param("ssssi", $data['name'], $data['email'], $data['subject'], $data['message'], $id);
+    // Update status if provided, else update full message
+    if (isset($data['status'])) {
+        $stmt = $conn->prepare("UPDATE contact_messages SET status=? WHERE id=?");
+        $stmt->bind_param("si", $data['status'], $id);
+    } elseif (isset($data['name'], $data['email'], $data['subject'], $data['message'])) {
+        $stmt = $conn->prepare("UPDATE contact_messages SET name=?, email=?, subject=?, message=? WHERE id=?");
+        $stmt->bind_param("ssssi", $data['name'], $data['email'], $data['subject'], $data['message'], $id);
+    } else {
+        echo json_encode(["success" => false, "message" => "Nothing to update"]);
+        exit;
+    }
 
     if ($stmt->execute()) {
-        echo json_encode(["success" => true, "message" => "Message updated successfully"]);
+        echo json_encode(["success" => true, "message" => "Updated successfully"]);
     } else {
         echo json_encode(["success" => false, "message" => "Update failed", "error" => $stmt->error]);
     }

@@ -1,11 +1,12 @@
 <?php
+// ------------------ CORS ------------------
 $allowedOrigins = [
     "https://azhalitsolutions.com",
-    "https://admin.azhalitsolutions.com"
+    "https://admin.azhalitsolutions.com",
+    "http://localhost:4200"
 ];
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-
 if (in_array($origin, $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
 }
@@ -14,32 +15,54 @@ header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Content-Type: application/json; charset=UTF-8");
 
-// Include config.php for DB connection
-include 'config.php';  // Adjust path if needed
-
+// ------------------ Errors ------------------
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-$action = $_POST['action'] ?? null;
+// ------------------ Include DB Config ------------------
+include 'config.php'; // adjust path if needed
+
+// ------------------ Handle JSON input ------------------
 $data_json = file_get_contents('php://input');
 $data = json_decode($data_json, true);
 
-// Use POST if no JSON action (e.g. file uploads)
-if (!$action) $action = $_POST['action'] ?? ($data['action'] ?? null);
+// Use POST action if present
+$action = $_POST['action'] ?? ($data['action'] ?? null);
 
-// ------------------ Account Registration ------------------
+// ------------------ GET ALL STUDENTS ------------------
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $stmt = $conn->prepare("
+        SELECT id, first_name, last_name, contact, institution_name, 
+               academic_year, dob, gender, address, department, course, 
+               status, updated_at
+        FROM student_register 
+        ORDER BY id DESC
+    ");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $students = [];
+    while ($row = $result->fetch_assoc()) {
+        $students[] = $row;
+    }
+    echo json_encode($students);
+    $stmt->close();
+    exit;
+}
+
+// ------------------ ACCOUNT REGISTRATION ------------------
 if ($action === 'register') {
     $first_name = $data['first_name'] ?? $_POST['first_name'] ?? '';
-    $last_name = $data['last_name'] ?? $_POST['last_name'] ?? '';
-    $contact = $data['contact'] ?? $_POST['contact'] ?? '';
-    $password = $data['password'] ?? $_POST['password'] ?? '';
+    $last_name  = $data['last_name'] ?? $_POST['last_name'] ?? '';
+    $contact    = $data['contact'] ?? $_POST['contact'] ?? '';
+    $password   = $data['password'] ?? $_POST['password'] ?? '';
 
     if (!$first_name || !$last_name || !$contact || !$password) {
         echo json_encode(["success" => false, "message" => "Missing required fields"]);
         exit;
     }
 
+    // Check duplicate contact
     $check = $conn->prepare("SELECT id FROM student_register WHERE contact=?");
     $check->bind_param("s", $contact);
     $check->execute();
@@ -53,7 +76,6 @@ if ($action === 'register') {
     $hash = password_hash($password, PASSWORD_DEFAULT);
     $stmt = $conn->prepare("INSERT INTO student_register (first_name, last_name, contact, password) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("ssss", $first_name, $last_name, $contact, $hash);
-
     if ($stmt->execute()) {
         echo json_encode([
             "success" => true,
@@ -67,17 +89,17 @@ if ($action === 'register') {
     exit;
 }
 
-// ------------------ Student Full Registration ------------------
-elseif ($action === 'register_full') {
-    $id = $_POST['user_id'] ?? '';
+// ------------------ FULL REGISTRATION / PROFILE UPDATE ------------------
+if ($action === 'register_full') {
+    $id              = $_POST['user_id'] ?? '';
     $institutionName = $_POST['institutionName'] ?? '';
-    $academicYear = $_POST['academicYear'] ?? '';
-    $dob = $_POST['dob'] ?? '';
-    $gender = $_POST['gender'] ?? '';
-    $address = $_POST['address'] ?? '';
-    $department = $_POST['department'] ?? '';
-    $course = $_POST['course'] ?? '';
-    $profile_image = '';
+    $academicYear    = $_POST['academicYear'] ?? '';
+    $dob             = $_POST['dob'] ?? '';
+    $gender          = $_POST['gender'] ?? '';
+    $address         = $_POST['address'] ?? '';
+    $department      = $_POST['department'] ?? '';
+    $course          = $_POST['course'] ?? '';
+    $profile_image   = '';
 
     if (isset($_FILES['profileImage']) && $_FILES['profileImage']['error'] === UPLOAD_ERR_OK) {
         $uploadDir = __DIR__ . '/uploads/';
@@ -91,11 +113,11 @@ elseif ($action === 'register_full') {
         $profile_image = "uploads/" . $fileName;
     }
 
-    $stmt = $conn->prepare(
-        "UPDATE student_register SET
+    $stmt = $conn->prepare("
+        UPDATE student_register SET
             institution_name=?, academic_year=?, dob=?, gender=?, address=?, department=?, course=?, profile_image=?
-         WHERE id=?"
-    );
+        WHERE id=?
+    ");
     $stmt->bind_param(
         "ssssssssi",
         $institutionName,
@@ -108,7 +130,6 @@ elseif ($action === 'register_full') {
         $profile_image,
         $id
     );
-
     if ($stmt->execute()) {
         echo json_encode(["success" => true, "message" => "Profile updated successfully"]);
     } else {
@@ -118,9 +139,9 @@ elseif ($action === 'register_full') {
     exit;
 }
 
-// ------------------ Login ------------------
-elseif ($action === 'login') {
-    $contact = $data['contact'] ?? $_POST['contact'] ?? '';
+// ------------------ LOGIN ------------------
+if ($action === 'login') {
+    $contact  = $data['contact'] ?? $_POST['contact'] ?? '';
     $password = $data['password'] ?? $_POST['password'] ?? '';
 
     if (!$contact || !$password) {
@@ -138,11 +159,11 @@ elseif ($action === 'login') {
             echo json_encode([
                 "success" => true,
                 "token" => bin2hex(random_bytes(16)),
-                "user" => [
+                "user"  => [
                     "id" => $row['id'],
                     "first_name" => $row['first_name'],
-                    "last_name" => $row['last_name'],
-                    "contact" => $row['contact']
+                    "last_name"  => $row['last_name'],
+                    "contact"    => $row['contact']
                 ]
             ]);
         } else {
@@ -155,8 +176,28 @@ elseif ($action === 'login') {
     exit;
 }
 
-// ------------------ Get Profile ------------------
-elseif ($action === 'get_profile') {
+// ------------------ DELETE STUDENT ------------------
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    $id = $_GET['id'] ?? null;
+
+    if (!$id || !is_numeric($id)) {
+        echo json_encode(["success" => false, "message" => "Invalid student ID"]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("DELETE FROM student_register WHERE id=?");
+    $stmt->bind_param("i", $id);
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Student deleted successfully"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Failed to delete student", "error" => $stmt->error]);
+    }
+    $stmt->close();
+    exit;
+}
+
+// ------------------ GET PROFILE ------------------
+if ($action === 'get_profile') {
     $user_id = $_POST['user_id'] ?? '';
     if (!$user_id) {
         echo json_encode(["success" => false, "message" => "User ID not found"]);
@@ -173,6 +214,30 @@ elseif ($action === 'get_profile') {
     } else {
         echo json_encode(["success" => false, "message" => "User not found"]);
     }
+    $stmt->close();
+    exit;
+}
+// ------------------ Update Status (Active/Inactive) ------------------
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    $id = $data['id'] ?? null;
+    $status = $data['status'] ?? null;
+
+    if (!$id || !is_numeric($id) || ($status !== 0 && $status !== 1)) {
+        echo json_encode(["success" => false, "message" => "Invalid request data"]);
+        exit;
+    }
+
+    $stmt = $conn->prepare("UPDATE student_register SET status=? WHERE id=?");
+    $stmt->bind_param("ii", $status, $id);
+
+    if ($stmt->execute()) {
+        echo json_encode(["success" => true, "message" => "Status updated successfully"]);
+    } else {
+        echo json_encode(["success" => false, "message" => "Failed to update status", "error" => $stmt->error]);
+    }
+
     $stmt->close();
     exit;
 }

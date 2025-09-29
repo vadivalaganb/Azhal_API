@@ -33,8 +33,11 @@ CREATE TABLE student_register (
     department VARCHAR(100),
     course VARCHAR(100),
     profile_image VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    status BOOLEAN NOT NULL DEFAULT 1, -- 1 = active, 0 = inactive
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
 
 /* User Pannel Tables End Here */
 

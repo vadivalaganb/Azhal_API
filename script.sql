@@ -38,7 +38,6 @@ CREATE TABLE student_register (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-
 /* User Pannel Tables End Here */
 
 
@@ -133,4 +132,35 @@ CREATE TABLE users (
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
+CREATE TABLE team_members (
+    id INT AUTO_INCREMENT PRIMARY key,
+    name VARCHAR(255) NOT NULL,
+    designation VARCHAR(255) NOT NULL,
+    profile_image VARCHAR(255) NOT NULL,
+    social_links TEXT NOT NULL,
+    status BOOLEAN NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 /* Admin Pannel Tables End Here */
+
+CREATE TABLE product_content (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    icon VARCHAR(100) NOT NULL,               -- FontAwesome class
+    header_name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status BOOLEAN NOT NULL DEFAULT 1,        -- active/inactive
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE testimonials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    profession VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    image VARCHAR(255),
+    status BOOLEAN NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);

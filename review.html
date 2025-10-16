@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Azhal IT Solutions | Review Page</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: "Poppins", Arial, sans-serif;
+      margin: 0;
+      background: #f8f9fb;
+      color: #333;
+    }
+
+    /* Header Bar */
+    .header {
+      background: #05b092;
+      color: #fff;
+      text-align: center;
+      padding: 1.2rem 0;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* Form Container */
+    .form-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 120px);
+      padding: 2rem;
+    }
+
+    .container {
+      background: #fff;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      text-align: center;
+      color: #222;
+      font-size: 1.5rem;
+      margin-bottom: 1.8rem;
+    }
+
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.4rem;
+      color: #333;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 1rem;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #f9f9f9;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: #05b092;
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(5, 176, 146, 0.15);
+    }
+
+    .mb-2 {
+      margin-bottom: 1.2rem;
+    }
+
+    .required {
+      color: #e63946;
+      font-weight: 600;
+    }
+
+    button {
+      width: 100%;
+      background: #05b092;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 0;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #04957c;
+    }
+
+    .text-danger {
+      color: #d32f2f;
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .alert {
+      padding: 14px;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .alert-danger {
+      background: #fdeaea;
+      color: #c62828;
+    }
+
+    .alert-success {
+      background: #e6f7e9;
+      color: #2e7d32;
+    }
+
+    .img-preview {
+      max-width: 100px;
+      border-radius: 6px;
+      display: block;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Azhal IT Solutions | Review Page</div>
+
+  <div class="form-wrapper">
+    <div class="container">
+      <div id="alerts"></div>
+      <div id="form-section" style="display:none">
+        <h2 id="form-title">Submit Your Review</h2>
+
+        <form id="reviewForm" enctype="multipart/form-data" novalidate>
+          <div class="mb-2">
+            <label for="name">Name <span class="required">*</span></label>
+            <input id="name" name="name" placeholder="Enter your name" required />
+            <div id="name-error" class="text-danger"></div>
+          </div>
+
+          <div class="mb-2">
+            <label for="profession">Profession</label>
+            <input id="profession" name="profession" placeholder="Enter your profession" />
+          </div>
+
+          <div class="mb-2">
+            <label for="message">Message <span class="required">*</span></label>
+            <textarea
+              id="message"
+              name="message"
+              rows="4"
+              placeholder="Write your review message..."
+              required
+            ></textarea>
+            <div id="message-error" class="text-danger"></div>
+          </div>
+
+          <div class="mb-2">
+            <label for="image">Profile Image (optional)</label>
+            <input id="image" name="image" type="file" accept="image/*" />
+            <img id="img-preview" class="img-preview" style="display:none" />
+          </div>
+
+          <button type="submit" id="submitBtn">Submit Review</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Config ----
+    const API_BASE = 'https://azhalitsolutions.com/api/testimonial.php';
+
+    // Helper: parse token from URL
+    function getToken() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('token');
+    }
+
+    // UI helpers
+    function showAlert(type, message) {
+      document.getElementById('alerts').innerHTML =
+        `<div class="alert alert-${type}">${message}</div>`;
+    }
+
+    function clearAlert() {
+      document.getElementById('alerts').innerHTML = '';
+    }
+  // showForm(`Submit Your ${reviewType.charAt(0).toUpperCase() + reviewType.slice(1)} Review`);
+    function showForm(title = 'Submit Your Review') {
+      document.getElementById('form-title').innerText = title;
+      document.getElementById('form-section').style.display = '';
+    }
+
+    function hideForm() {
+      document.getElementById('form-section').style.display = 'none';
+    }
+
+    function setError(field, msg) {
+      document.getElementById(field + '-error').innerText = msg;
+    }
+
+    function clearErrors() {
+      setError('name', '');
+      setError('message', '');
+    }
+
+    // ---- Logic ----
+    const token = getToken();
+    let reviewType = '';
+
+    // Validate token first
+    if (!token) {
+      showAlert('danger', 'Invalid or expired review link.<br>Please contact support or request a new link.');
+    } else {
+      fetch(`${API_BASE}?action=validate_token&token=${encodeURIComponent(token)}`)
+        .then(resp => resp.json())
+        .then(data => {
+          if (!data.valid) {
+            showAlert('danger', 'Invalid or expired review link.<br>Please contact support or request a new link.');
+          } else {
+            reviewType = data.type || '';
+            clearAlert();
+            showForm(`Submit Your  Review`);
+          }
+        })
+        .catch(() => {
+          showAlert('danger', 'Error validating review link.');
+        });
+    }
+
+    // Image preview
+    document.getElementById('image').addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      const img = document.getElementById('img-preview');
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          img.src = e.target.result;
+          img.style.display = '';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+      }
+    });
+
+    // Form submit
+    document.getElementById('reviewForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      clearErrors();
+      clearAlert();
+
+      const name = document.getElementById('name').value.trim();
+      const profession = document.getElementById('profession').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const imageInput = document.getElementById('image');
+      let hasError = false;
+      if (!name) { setError('name', 'Name is required.'); hasError = true; }
+      if (!message) { setError('message', 'Message is required.'); hasError = true; }
+      if (hasError) return;
+
+      const formData = new FormData();
+      formData.append('token', token);
+      formData.append('name', name);
+      formData.append('profession', profession);
+      formData.append('message', message);
+      if (imageInput.files && imageInput.files[0]) {
+        formData.append('image', imageInput.files[0]);
+      }
+
+      document.getElementById('submitBtn').disabled = true;
+
+      fetch(`${API_BASE}?action=submit_review`, {
+        method: 'POST',
+        body: formData
+      })
+        .then(r => r.json())
+        .then(res => {
+          if (res.success) {
+            showAlert('success', 'Thank you for your review! Your submission has been received.');
+            hideForm();
+          } else {
+            showAlert('danger', res.error || 'Submission failed.');
+          }
+        })
+        .catch(() => {
+          showAlert('danger', 'Network or server error occurred during submission.');
+        })
+        .finally(() => {
+          document.getElementById('submitBtn').disabled = false;
+        });
+    });
+  </script>
+</body>
+</html>

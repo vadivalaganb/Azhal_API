@@ -25,15 +25,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// ----------------------
-// Error Reporting
-// ----------------------
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
-// ----------------------
-// DB Config
-// ----------------------
 include 'config.php'; // $conn should be defined here
 
 if (!isset($conn) || $conn->connect_errno) {
@@ -73,8 +67,7 @@ function handleFileUpload($fileInputName = 'file')
 
 function generateSlug($string)
 {
-    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $string)));
-    return $slug;
+    return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $string)));
 }
 
 // ----------------------
@@ -119,17 +112,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $short_description = $_POST['short_description'] ?? '';
     $description = $_POST['description'] ?? '';
     $category_id = (int)($_POST['category_id'] ?? 0);
-    // Correct status handling
     $status = isset($_POST['status']) && ($_POST['status'] === 'true' || $_POST['status'] == '1') ? 1 : 0;
 
     if (trim($header_name) === '' || trim($description) === '') {
         jsonResponse(['success' => false, 'error' => 'Header and description required'], 400);
     }
 
-    // Generate slug
     $slug = generateSlug($header_name);
 
-    // File upload
+    // Handle file upload
     $file_path = $_POST['existing_file'] ?? null;
     if (!empty($_FILES['file']['name'])) {
         $uploadResult = handleFileUpload('file');
@@ -153,9 +144,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             INSERT INTO blogs (header_name, slug, short_description, description, category_id, file_path, status)
             VALUES (?,?,?,?,?,?,?)
         ");
-        $stmt->bind_param("ssssis", $header_name, $slug, $short_description, $description, $category_id, $file_path, $status);
-        if ($stmt->execute()) jsonResponse(['success' => true, 'id' => $stmt->insert_id, 'message' => 'Blog created']);
-        else jsonResponse(['success' => false, 'error' => $stmt->error], 500);
+        $stmt->bind_param("ssssisi", $header_name, $slug, $short_description, $description, $category_id, $file_path, $status);
+        if ($stmt->execute()) {
+            jsonResponse(['success' => true, 'id' => $stmt->insert_id, 'message' => 'Blog created successfully']);
+        } else {
+            jsonResponse(['success' => false, 'error' => $stmt->error], 500);
+        }
     }
 }
 
@@ -163,18 +157,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // DELETE
 // ----------------------
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    parse_str(file_get_contents("php://input"), $data);
-    $id = (int)($data['id'] ?? 0);
+    $id = (int)($_GET['id'] ?? 0);
 
-    if ($id <= 0) jsonResponse(['success' => false, 'error' => 'Invalid ID'], 400);
+    if ($id <= 0) {
+        jsonResponse(['success' => false, 'error' => 'Invalid blog ID'], 400);
+    }
 
-    $stmt = $conn->prepare("DELETE FROM blogs WHERE id=?");
+    $stmt = $conn->prepare("DELETE FROM blogs WHERE id = ?");
     $stmt->bind_param("i", $id);
-    if ($stmt->execute()) jsonResponse(['success' => true, 'message' => 'Blog deleted']);
-    else jsonResponse(['success' => false, 'error' => $stmt->error], 500);
+    if ($stmt->execute()) {
+        jsonResponse(['success' => true, 'message' => 'Blog deleted successfully']);
+    } else {
+        jsonResponse(['success' => false, 'error' => $stmt->error], 500);
+    }
 }
 
-// ----------------------
-// Method not allowed
-// ----------------------
 jsonResponse(['success' => false, 'error' => 'Method not allowed'], 405);
+
+?>

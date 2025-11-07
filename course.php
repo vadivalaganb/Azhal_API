@@ -69,6 +69,7 @@ if ($method === 'POST') {
     $course_duration = $_POST['course_duration'] ?? '';
     $course_level = $_POST['course_level'] ?? '';
     $course_instructor = $_POST['course_instructor'] ?? '';
+    $max_students = $_POST['max_students'] ?? '';
     $status = isset($_POST['status']) && ($_POST['status'] === 'true' || $_POST['status'] === '1') ? 1 : 0;
 
     // ----------------- Handle File Upload -----------------
@@ -89,33 +90,35 @@ if ($method === 'POST') {
     if (!empty($id)) {
         $sql = "UPDATE courses SET 
                 header_name=?, short_description=?, description=?, 
-                course_duration=?, course_level=?, course_instructor=?, status=?";
+                course_duration=?, course_level=?, course_instructor=?, max_students=?, status=?";
         if ($file_path) $sql .= ", file_path=?";
         $sql .= " WHERE id=?";
 
         $stmt = $conn->prepare($sql);
         if ($file_path) {
             $stmt->bind_param(
-                "sssssssii",
+                "ssssssiisi",
                 $header_name,
                 $short_description,
                 $description,
                 $course_duration,
                 $course_level,
                 $course_instructor,
+                $max_students,
                 $status,
                 $file_path,
                 $id
             );
         } else {
             $stmt->bind_param(
-                "sssssssi",
+                "ssssssiii",
                 $header_name,
                 $short_description,
                 $description,
                 $course_duration,
                 $course_level,
                 $course_instructor,
+                $max_students,
                 $status,
                 $id
             );
@@ -130,19 +133,21 @@ if ($method === 'POST') {
 
     // ----------------- CREATE -----------------
     $stmt = $conn->prepare("INSERT INTO courses 
-            (header_name, short_description, description, course_duration, course_level, course_instructor, file_path, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            (header_name, short_description, description, course_duration, course_level, course_instructor, max_students, file_path, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param(
-        "sssssssi",
+        "ssssssisi",
         $header_name,
         $short_description,
         $description,
         $course_duration,
         $course_level,
         $course_instructor,
+        $max_students,
         $file_path,
         $status
     );
+
 
     if ($stmt->execute()) {
         jsonResponse(['success' => true, 'message' => 'Course added successfully']);
@@ -178,4 +183,3 @@ if ($method === 'DELETE') {
 }
 
 jsonResponse(['success' => false, 'error' => 'Invalid request method'], 405);
-?>

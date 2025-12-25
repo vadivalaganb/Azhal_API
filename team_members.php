@@ -174,8 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ===================================================== */
 if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
-    parse_str(file_get_contents("php://input"), $data);
-    $id = (int)($data['id'] ?? 0);
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
     if ($id <= 0) {
         jsonResponse(['success' => false, 'error' => 'Invalid ID'], 400);
@@ -185,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     $stmt->bind_param("i", $id);
 
     if ($stmt->execute()) {
-        jsonResponse(['success' => true]);
+        jsonResponse(['success' => true, 'message' => 'Deleted successfully']);
     }
 
     jsonResponse(['success' => false, 'error' => $stmt->error], 500);
